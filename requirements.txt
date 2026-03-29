@@ -1,10 +1,12 @@
 fastapi
-uvicorn
-pydantic
-fastapi-offline
-jinja2
-python-multipart
-aiofiles
-fpdf2
-pandas
-openpyxl
+ uvicorn
+ pydantic
+ fastapi-offline
+ jinja2
+ python-multipart
+ aiofiles
+ fpdf2
+ pandas
+ openpyxl
++ultralytics
++opencv-python-headless
