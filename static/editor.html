@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VibeDesign — Smart AI Editor</title>
+  <meta name="description"
+    content="Professional AI-powered graphic design editor with smart layout, 3D models, and intelligent text wrapping." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/static/editor.css" />
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  TOP HEADER BAR                                -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <header id="editor-header">
+    <div class="header-left">
+      <a href="/" class="logo-link" title="Back to Home">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="m21 15-5-5L5 21" />
+          </svg>
+        </div>
+        <!-- <span class="logo-text">Vibe<span class="accent"></span></span> -->
+      </a>
+      <div class="header-divider"></div>
+      <div class="doc-title-wrap">
+        <input type="text" id="doc-title" class="doc-title-input" value="Untitled Design" spellcheck="false" />
+      </div>
+    </div>
+
+    <div class="header-center">
+      <button class="header-btn" id="btn-undo" title="Undo (Ctrl+Z)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10" />
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+        </svg>
+      </button>
+      <button class="header-btn" id="btn-redo" title="Redo (Ctrl+Y)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10" />
+          <path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="header-right">
+      <span class="online-indicator" id="online-indicator" title="Online — AI tools available">
+        <span class="indicator-dot online"></span>
+        <span class="indicator-label">Online</span>
+      </span>
+      <button class="header-btn btn-export" id="btn-export" title="Download Design">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Export
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  CONTEXTUAL OBJECT TOOLBAR                     -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="object-toolbar" class="object-toolbar hidden">
+    <div class="toolbar-group">
+      <label class="toolbar-label">Fill</label>
+      <input type="color" id="fill-color" class="color-swatch" value="#6c5ce7" title="Fill Color" />
+    </div>
+    <div class="toolbar-group">
+      <label class="toolbar-label">Stroke</label>
+      <input type="color" id="stroke-color" class="color-swatch" value="#2d3436" title="Stroke Color" />
+    </div>
+    <div class="toolbar-group">
+      <label class="toolbar-label">Opacity</label>
+      <input type="range" id="opacity-slider" class="toolbar-range" min="0" max="100" value="100" />
+      <span id="opacity-val" class="range-val">100%</span>
+    </div>
+    <div class="toolbar-group">
+      <label class="toolbar-label">Font</label>
+      <select id="font-selector" class="toolbar-select">
+        <option value="Inter">Inter</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Arial">Arial</option>
+      </select>
+    </div>
+    <div class="toolbar-group">
+      <label class="toolbar-label">Size</label>
+      <input type="number" id="font-size" class="toolbar-number" value="24" min="8" max="200" />
+    </div>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-action" id="btn-bring-front" title="Bring to Front">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="8" y="2" width="14" height="14" rx="2" />
+        <rect x="2" y="8" width="14" height="14" rx="2" opacity="0.4" />
+      </svg>
+    </button>
+    <button class="toolbar-action" id="btn-send-back" title="Send to Back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="8" width="14" height="14" rx="2" />
+        <rect x="8" y="2" width="14" height="14" rx="2" opacity="0.4" />
+      </svg>
+    </button>
+    <button class="toolbar-action danger" id="btn-delete" title="Delete (Del)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  MAIN LAYOUT                                   -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="editor-layout">
+
+    <!-- ── PRIMARY SIDEBAR (icon rail) ──────────── -->
+    <aside id="primary-sidebar">
+      <button class="sidebar-icon active" data-panel="elements" title="Elements">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="10 8 16 12 10 16 10 8" />
+        </svg>
+        <span>Elements</span>
+      </button>
+      <button class="sidebar-icon" data-panel="shapes" title="Shapes">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="3" width="7" height="7" />
+          <circle cx="17.5" cy="6.5" r="3.5" />
+          <polygon points="12 14 8 22 16 22 12 14" />
+        </svg>
+        <span>Shapes</span>
+      </button>
+      <button class="sidebar-icon" data-panel="text" title="Text">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 7 4 4 20 4 20 7" />
+          <line x1="9" y1="20" x2="15" y2="20" />
+          <line x1="12" y1="4" x2="12" y2="20" />
+        </svg>
+        <span>Text</span>
+      </button>
+      <button class="sidebar-icon" data-panel="uploads" title="Uploads">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <span>Uploads</span>
+      </button>
+      <button class="sidebar-icon" data-panel="models3d" title="3D Models">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z" />
+          <path d="M2 17l10 5 10-5" />
+          <path d="M2 12l10 5 10-5" />
+        </svg>
+        <span>3D</span>
+      </button>
+      <button class="sidebar-icon" data-panel="ai-tools" title="AI Tools">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+        <span>AI</span>
+      </button>
+    </aside>
+
+    <!-- ── SECONDARY SIDEBAR (contextual panel) ─── -->
+    <aside id="secondary-sidebar">
+
+      <!-- Elements Panel -->
+      <div class="panel active" data-panel-id="elements">
+        <div class="panel-header">
+          <h3>Elements</h3>
+          <input type="search" class="panel-search" id="elements-search" placeholder="Search elements…" />
+        </div>
+        <div class="panel-body">
+          <div class="asset-grid" id="elements-grid">
+            <div class="panel-loading">Loading assets…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shapes Panel -->
+      <div class="panel" data-panel-id="shapes">
+        <div class="panel-header">
+          <h3>Shapes</h3>
+        </div>
+        <div class="panel-body">
+          <div class="shape-presets">
+            <button class="shape-btn" data-shape="rect" title="Rectangle">
+              <svg width="32" height="32" viewBox="0 0 40 40">
+                <rect x="4" y="8" width="32" height="24" rx="3" fill="currentColor" />
+              </svg>
+            </button>
+            <button class="shape-btn" data-shape="circle" title="Circle">
+              <svg width="32" height="32" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="14" fill="currentColor" />
+              </svg>
+            </button>
+            <button class="shape-btn" data-shape="triangle" title="Triangle">
+              <svg width="32" height="32" viewBox="0 0 40 40">
+                <polygon points="20,4 36,36 4,36" fill="currentColor" />
+              </svg>
+            </button>
+            <button class="shape-btn" data-shape="star" title="Star">
+              <svg width="32" height="32" viewBox="0 0 40 40">
+                <polygon points="20,2 25,15 38,15 27,23 31,37 20,28 9,37 13,23 2,15 15,15" fill="currentColor" />
+              </svg>
+            </button>
+            <button class="shape-btn" data-shape="line" title="Line">
+              <svg width="32" height="32" viewBox="0 0 40 40">
+                <line x1="4" y1="36" x2="36" y2="4" stroke="currentColor" stroke-width="3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Panel -->
+      <div class="panel" data-panel-id="text">
+        <div class="panel-header">
+          <h3>Text</h3>
+        </div>
+        <div class="panel-body">
+          <button class="text-preset" data-preset="heading" id="add-heading">
+            <span class="preset-preview heading">Add a heading</span>
+          </button>
+          <button class="text-preset" data-preset="subheading" id="add-subheading">
+            <span class="preset-preview subheading">Add a subheading</span>
+          </button>
+          <button class="text-preset" data-preset="body" id="add-body">
+            <span class="preset-preview body">Add body text</span>
+          </button>
+          <div class="text-divider"></div>
+          <h4 class="panel-sub-title">Smart Text</h4>
+          <button class="smart-text-btn" id="btn-smart-wrap" title="AI will wrap text around nearby objects">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M3 12h9M3 18h18" />
+              <rect x="14" y="9" width="8" height="6" rx="1" stroke-dasharray="3 2" />
+            </svg>
+            Smart Text Wrap
+          </button>
+        </div>
+      </div>
+
+      <!-- Uploads Panel -->
+      <div class="panel" data-panel-id="uploads">
+        <div class="panel-header">
+          <h3>Uploads</h3>
+        </div>
+        <div class="panel-body">
+          <div class="upload-area" id="editor-upload-zone">
+            <input type="file" id="editor-file-input" multiple accept="image/*" hidden />
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <p>Drop images or click to upload</p>
+          </div>
+          <div class="asset-grid" id="uploads-grid"></div>
+        </div>
+      </div>
+
+      <!-- 3D Models Panel -->
+      <div class="panel" data-panel-id="models3d">
+        <div class="panel-header">
+          <h3>3D Models</h3>
+        </div>
+        <div class="panel-body">
+          <div class="asset-grid model-grid" id="models3d-grid">
+            <div class="panel-loading">Loading 3D models…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Tools Panel -->
+      <div class="panel" data-panel-id="ai-tools">
+        <div class="panel-header">
+          <h3>AI Tools</h3>
+        </div>
+        <div class="panel-body">
+          <button class="ai-tool-btn" id="btn-ai-bg-remove" title="Remove background from selected image">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="m21 15-5-5L5 21" />
+            </svg>
+            <div>
+              <strong>BG Remover</strong>
+              <small>YOLO / SAM3 powered</small>
+            </div>
+          </button>
+          <button class="ai-tool-btn" id="btn-ai-smart-layout" title="Auto arrange elements">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+            </svg>
+            <div>
+              <strong>Smart Layout</strong>
+              <small>Auto-align &amp; distribute</small>
+            </div>
+          </button>
+          <button class="ai-tool-btn" id="btn-ai-color-grade" title="Match colors to design theme">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a7 7 0 0 0 0 20z" />
+            </svg>
+            <div>
+              <strong>Color Grading</strong>
+              <small>Theme-match elements</small>
+            </div>
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ── CANVAS WORKSPACE ─────────────────────── -->
+    <main id="canvas-workspace">
+      <div id="canvas-scroll-area">
+        <div id="canvas-frame">
+          <canvas id="fabric-canvas"></canvas>
+          <!-- Three.js overlay will be injected here by three_env.js -->
+          <div id="three-overlay" class="three-overlay hidden"></div>
+        </div>
+      </div>
+
+      <!-- zoom controls -->
+      <div class="zoom-controls" id="zoom-controls">
+        <button class="zoom-btn" id="btn-zoom-out" title="Zoom Out">−</button>
+        <span class="zoom-level" id="zoom-level">100%</span>
+        <button class="zoom-btn" id="btn-zoom-in" title="Zoom In">+</button>
+        <button class="zoom-btn" id="btn-zoom-fit" title="Fit to screen">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+          </svg>
+        </button>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  SCRIPTS                                       -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- Fabric.js CDN (with offline graceful fallback) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+  <!-- Three.js CDN -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+    }
+  }
+  </script>
+  <script src="/static/editor.js"></script>
+  <script type="module" src="/static/three_env.js"></script>
+</body>
+
+</html>

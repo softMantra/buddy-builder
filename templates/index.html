@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structure Predictor - Elegance Delivered</title>
+    <meta name="description" content="Generate beautiful, localized premium cards completely offline.">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/vendor/fabric.min.js"></script>
+</head>
+
+<body class="light-theme">
+    <div class="glass-background"></div>
+
+    <main class="app-container">
+        <header>
+            <h1 class="gradient-text">AI Builder</h1>
+        </header>
+
+        <!-- View 0: Dashboard -->
+        <section id="view-dashboard" class="view active-view fade-in">
+            <div class="dashboard-header flex-between">
+                <h2>Clients Dashboard</h2>
+                <button class="primary-btn glow-effect" onclick="app.showView('view-client-form')">+ New Client</button>
+            </div>
+            <div id="client-list" class="client-grid fade-in">
+                <!-- Clients will be injected here -->
+            </div>
+        </section>
+
+        <!-- View 0.1: Client Form -->
+        <section id="view-client-form" class="view hidden">
+            <button class="back-btn" onclick="app.showView('view-dashboard')">← Back to Dashboard</button>
+            <h2>Create New Client</h2>
+            <form id="new-client-form" class="glass-form fade-in">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="name" required class="glass-input">
+                </div>
+                <div class="form-group">
+                    <label>Email ID</label>
+                    <input type="email" name="email" required class="glass-input">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" name="phone" required class="glass-input">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea name="address" required class="glass-input"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="primary-btn glow-effect">Save Client</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- View 0.2: Client Profile (Full Screen) -->
+        <section id="view-client-profile" class="view hidden fade-in profile-view">
+            <div class="profile-header flex-between">
+                <button class="back-btn" onclick="app.showView('view-dashboard')">← Dashboard</button>
+                <div class="profile-actions">
+                    <button id="btn-export-pdf" class="secondary-btn"> Export PDF</button>
+                    <button id="btn-export-excel" class="secondary-btn">Export Excel</button>
+                </div>
+            </div>
+            <div class="profile-details glass-panel">
+                <h2 id="profile-name">Client Name</h2>
+                <p><strong>Email:</strong> <span id="profile-email"></span></p>
+                <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
+                <p><strong>Address:</strong> <span id="profile-address"></span></p>
+            </div>
+            <div class="profile-projects-section">
+                <div class="projects-header flex-between">
+                    <h3>Project History</h3>
+                    <button class="primary-btn glow-effect" onclick="app.startNewProject()">+ Create New
+                        Project</button>
+                </div>
+                <div id="profile-projects-list" class="projects-grid">
+                    <!-- Project cards injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- View 1: Category Selection -->
+        <section id="view-category" class="view hidden fade-in">
+            <button class="back-btn" id="btn-back-to-profile" onclick="app.showView('view-client-profile')">← Back to
+                Profile</button>
+            <h2>Select Card Category</h2>
+            <div class="category-grid">
+                <button class="glass-btn card-category" data-category="wedding">
+                    <span class="icon">💍</span>
+                    <h3>Wedding</h3>
+                    <p>Elegant designs for your special day</p>
+                </button>
+                <button class="glass-btn card-category" data-category="birthday">
+                    <span class="icon">🎂</span>
+                    <h3>Birthday</h3>
+                    <p>Bright & fun birthday templates</p>
+                </button>
+                <button class="glass-btn card-category" data-category="business">
+                    <span class="icon">💼</span>
+                    <h3>Business</h3>
+                    <p>Professional ID & Business cards</p>
+                </button>
+                <button class="glass-btn card-category" data-category="greeting">
+                    <span class="icon">✉️</span>
+                    <h3>Greeting</h3>
+                    <p>Warm & personalized greetings</p>
+                </button>
+            </div>
+        </section>
+
+        <!-- View 2: Form Input -->
+        <section id="view-form" class="view hidden">
+            <button class="back-btn" onclick="app.showView('view-category')">← Back</button>
+            <h2 id="form-title">Fill Details</h2>
+            <form id="card-form" class="glass-form fade-in">
+                <div id="dynamic-form-fields"></div>
+                <div class="form-actions">
+                    <button type="submit" class="primary-btn glow-effect">Generate Card ✨</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- View 3: Preview & Actions -->
+        <section id="view-preview" class="view hidden">
+            <button class="back-btn" onclick="app.showView('view-form')">← Back to Form</button>
+            <h2>Preview Card</h2>
+            <div class="preview-container fade-in">
+                <!-- Canvas container for Fabric.js -->
+                <canvas id="card-canvas" width="800" height="600"></canvas>
+            </div>
+            <div class="action-buttons fade-in">
+                <button id="btn-edit" class="secondary-btn">✏️ Edit Mode</button>
+                <button id="btn-print" class="primary-btn">🖨️ Print</button>
+            </div>
+        </section>
+
+        <!-- Editor Tool Panel (shown only when editing) -->
+        <section id="editor-panel" class="editor-panel hidden fade-in">
+            <div class="editor-header">
+                <h3>🎨 Editor Tools</h3>
+                <button id="btn-finish-edit" class="success-btn">✅ Finish Edit</button>
+            </div>
+
+            <div class="editor-body">
+                <div class="tool-section">
+                    <h4>Basic Tools</h4>
+                    <div class="tool-group">
+                        <label>Add Text</label>
+                        <input type="text" id="new-text" placeholder="Type here...">
+                        <button id="btn-add-text" class="small-btn">Add</button>
+                    </div>
+                    <div class="tool-group">
+                        <label>Color</label>
+                        <input type="color" id="color-picker" value="#ffffff">
+                        <button id="btn-delete-obj" class="danger-btn">🗑️ Remove Selected</button>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h4>Asset Library</h4>
+                    <div id="asset-library-container" class="asset-grid">
+                        <p>Loading assets...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+
+</html>
