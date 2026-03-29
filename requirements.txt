@@ -8,5 +8,5 @@ fastapi
  fpdf2
  pandas
  openpyxl
-+ultralytics
-+opencv-python-headless
+ultralytics
+opencv-python-headless
