@@ -33,6 +33,20 @@
     const btnSendBack = document.getElementById("btn-send-back");
     const btnExport = document.getElementById("btn-export");
 
+    // Added Actions
+    const btnUndo = document.getElementById("btn-undo");
+    const btnRedo = document.getElementById("btn-redo");
+    const btnZoomIn = document.getElementById("btn-zoom-in");
+    const btnZoomOut = document.getElementById("btn-zoom-out");
+    const btnZoomFit = document.getElementById("btn-zoom-fit");
+    const btnFullscreen = document.getElementById("btn-fullscreen");
+    const zoomLevelEl = document.getElementById("zoom-level");
+    const editorLayout = document.getElementById("editor-layout");
+    const uploadZone = document.getElementById("editor-upload-zone");
+    const fileInput = document.getElementById("editor-file-input");
+    const canvasWorkspace = document.getElementById("canvas-workspace");
+    const shapesFlowerGrid = document.getElementById("shapes-flower-grid");
+
     // AI Tools
     const btnAiBgRemove = document.getElementById("btn-ai-bg-remove");
     const btnSmartLayout = document.getElementById("btn-ai-smart-layout");
@@ -73,22 +87,49 @@
         } catch(e) { console.error("Could not load transferred card layout", e); }
     }
 
+    // --- HISTORY (UNDO/REDO) ---
+    let undoStack = [];
+    let redoStack = [];
+    let isHistoryProcessing = false;
+
+    function saveHistory() {
+        if (isHistoryProcessing) return;
+        undoStack.push(JSON.stringify(canvas.toDatalessJSON()));
+        redoStack = []; // clear redo on new action
+    }
+
+    canvas.on('object:added', saveHistory);
+    canvas.on('object:modified', saveHistory);
+    canvas.on('object:removed', saveHistory);
+
+    // Initial state
+    setTimeout(saveHistory, 100);
+
     // Resize canvas to fit viewport
+    let currentScale = 1;
+    let manualZoom = 1;
+
     function resizeCanvas() {
-        const cw = canvasWrap.clientWidth - 80;
-        const ch = canvasWrap.clientHeight - 80;
-        // Keep 4:3 aspect ratio
-        const ar = 800 / 600;
-        let nw = cw;
-        let nh = cw / ar;
-        if (nh > ch) { nh = ch; nw = nh * ar; }
+        if (!document.fullscreenElement) {
+            const cw = canvasWrap.clientWidth - 80;
+            const ch = canvasWrap.clientHeight - 80;
+            // Keep 4:3 aspect ratio
+            const ar = 800 / 600;
+            let nw = cw;
+            let nh = cw / ar;
+            if (nh > ch) { nh = ch; nw = nh * ar; }
+            currentScale = Math.min(nw/800, nh/600);
+        }
         
         // Use CSS zoom for responsive canvas
         const frame = document.getElementById("canvas-frame");
         frame.style.width = `800px`;
         frame.style.height = `600px`;
-        const scale = Math.min(nw/800, nh/600);
-        frame.style.transform = `scale(${scale})`;
+        frame.style.transform = `scale(${currentScale * manualZoom})`;
+        
+        if (zoomLevelEl) {
+            zoomLevelEl.textContent = Math.round(manualZoom * 100) + "%";
+        }
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
@@ -131,9 +172,20 @@
         // Uploads (PNGs/JPGs)
         data.stickers.concat(data.flowers, data.people, data.decorations).forEach(asset => {
             const thumb = createThumb(asset, 'img');
-            thumb.addEventListener("click", () => addImage(asset));
+            thumb.addEventListener("click", () => addImage(asset, true));
             uploadsGrid.appendChild(thumb);
         });
+
+        // Flowers
+        if (shapesFlowerGrid) {
+            shapesFlowerGrid.innerHTML = "";
+            const flowerUrls = ["f1.jpg", "f2.jpg", "f3.jpg", "f4.jpg"].map(f => `/static/assets/shapes/flower/${f}`);
+            flowerUrls.forEach(url => {
+                const thumb = createThumb(url, 'img');
+                thumb.addEventListener("click", () => addImage(url, true));
+                shapesFlowerGrid.appendChild(thumb);
+            });
+        }
 
         // 3D Models
         data["3d_models"].forEach((asset) => {
@@ -166,21 +218,46 @@
     }
 
     // ── CANVAS ADDITIONS ────────────────────────────────────────
+    function smartFitToCenter(obj) {
+        const padding = 40;
+        const maxW = canvas.width - padding;
+        const maxH = canvas.height - padding;
+        let scale = 1;
+        
+        if (obj.width && obj.height) {
+            const scaleX = maxW / obj.width;
+            const scaleY = maxH / obj.height;
+            scale = Math.min(scaleX, scaleY, 1);
+            if (scale < 1) {
+                obj.scale(scale);
+            }
+        }
+        
+        obj.set({
+            left: (canvas.width / 2) - ((obj.width * scale) / 2),
+            top: (canvas.height / 2) - ((obj.height * scale) / 2)
+        });
+        obj.setCoords();
+    }
+
     function addSvg(url) {
         fabric.loadSVGFromURL(url, (objects, options) => {
             const svgGroup = fabric.util.groupSVGElements(objects, options);
-            svgGroup.scaleToWidth(150);
-            svgGroup.set({ left: 100, top: 100 });
+            smartFitToCenter(svgGroup);
             canvas.add(svgGroup);
             canvas.setActiveObject(svgGroup);
             canvas.renderAll();
         });
     }
 
-    function addImage(url) {
+    function addImage(url, useSmartFit=false) {
         fabric.Image.fromURL(url, (img) => {
-            img.scaleToWidth(200);
-            img.set({ left: 100, top: 100 });
+            if (useSmartFit) {
+                smartFitToCenter(img);
+            } else {
+                img.scaleToWidth(200);
+                img.set({ left: 100, top: 100 });
+            }
             canvas.add(img);
             canvas.setActiveObject(img);
             canvas.renderAll();
@@ -308,13 +385,7 @@
         canvas.getActiveObjects().forEach(o => canvas.remove(o));
         canvas.discardActiveObject().renderAll();
     });
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Delete" || e.key === "Backspace") {
-            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || canvas.getActiveObject()?.isEditing) return;
-            canvas.getActiveObjects().forEach(o => canvas.remove(o));
-            canvas.discardActiveObject().renderAll();
-        }
-    });
+    // Keyboard Shortcuts handles delete inside the combined event further down.
 
     btnBringFront.addEventListener("click", () => {
         const obj = canvas.getActiveObject();
@@ -323,6 +394,138 @@
     btnSendBack.addEventListener("click", () => {
         const obj = canvas.getActiveObject();
         if (obj) { canvas.sendToBack(obj); canvas.renderAll(); }
+    });
+
+    // ── NEW FEATURES (UNDO/REDO, ZOOM, FULLSCREEN, EXPORT, UPLOAD, DND) ──
+    
+    // Undo / Redo
+    btnUndo.addEventListener("click", () => {
+        if (undoStack.length > 1) { // >1 because the first is the initial state
+            isHistoryProcessing = true;
+            const currentState = undoStack.pop();
+            redoStack.push(currentState);
+            const prevState = undoStack[undoStack.length - 1];
+            canvas.loadFromJSON(prevState, () => {
+                canvas.renderAll();
+                isHistoryProcessing = false;
+            });
+        } else {
+            showToast("Nothing to undo", "warning");
+        }
+    });
+
+    btnRedo.addEventListener("click", () => {
+        if (redoStack.length > 0) {
+            isHistoryProcessing = true;
+            const nextState = redoStack.pop();
+            undoStack.push(nextState);
+            canvas.loadFromJSON(nextState, () => {
+                canvas.renderAll();
+                isHistoryProcessing = false;
+            });
+        }
+    });
+
+    // Keyboard Shortcuts
+    document.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || canvas.getActiveObject()?.isEditing) return;
+        
+        if (e.key === "Delete" || e.key === "Backspace") {
+            canvas.getActiveObjects().forEach(o => canvas.remove(o));
+            canvas.discardActiveObject().renderAll();
+        } else if (e.key === "z" && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+            e.preventDefault();
+            btnUndo.click();
+        } else if ((e.key === "y" && (e.ctrlKey || e.metaKey)) || (e.key === "z" && (e.ctrlKey || e.metaKey) && e.shiftKey)) {
+            e.preventDefault();
+            btnRedo.click();
+        }
+    });
+
+    // Zoom
+    btnZoomIn.addEventListener("click", () => {
+        manualZoom += 0.1;
+        if (manualZoom > 3) manualZoom = 3;
+        resizeCanvas();
+    });
+    btnZoomOut.addEventListener("click", () => {
+        manualZoom -= 0.1;
+        if (manualZoom < 0.2) manualZoom = 0.2;
+        resizeCanvas();
+    });
+    btnZoomFit.addEventListener("click", () => {
+        manualZoom = 1;
+        resizeCanvas();
+    });
+
+    // Full screen
+    btnFullscreen.addEventListener("click", () => {
+        if (!document.fullscreenElement) {
+            editorLayout.requestFullscreen().catch(err => {
+                showToast(`Error attempting to enable fullscreen: ${err.message}`, "error");
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    });
+    
+    // Fullscreen change handler to reset standard scaling calculations
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+             const frame = document.getElementById("canvas-frame");
+             const rw = window.innerWidth;
+             const rh = window.innerHeight;
+             currentScale = Math.min(rw/800, rh/600);
+             frame.style.transform = `scale(${currentScale * manualZoom})`;
+        } else {
+             resizeCanvas();
+        }
+    });
+
+    // Export
+    btnExport.addEventListener("click", () => {
+        try {
+            const dataURL = canvas.toDataURL({ format: "png", quality: 1, multiplier: 2 });
+            const link = document.createElement("a");
+            link.download = "vibe_design.png";
+            link.href = dataURL;
+            link.click();
+            showToast("Design exported successfully!", "success");
+        } catch (e) {
+            showToast("Export failed. Make sure all assets are loaded securely.", "error");
+            console.error(e);
+        }
+    });
+
+    // Upload & Drag-Drop
+    function addImageFile(file) {
+        if (!file.type.startsWith("image/")) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            addImage(e.target.result, true);
+            showToast("Added " + file.name);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    uploadZone.addEventListener("click", () => fileInput.click());
+    
+    fileInput.addEventListener("change", (e) => {
+        Array.from(e.target.files).forEach(addImageFile);
+        fileInput.value = ""; // reset
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        canvasWorkspace.addEventListener(eventName, preventDefaults, false);
+    });
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+    canvasWorkspace.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length > 0) {
+            Array.from(files).forEach(addImageFile);
+        }
     });
 
     // ── SMART LAYOUT (AI Features) ──────────────────────────────
